@@ -63,7 +63,7 @@ app.get('/', function(req, res) { res.redirect(301, '/list'); });
 
 app.get('/announce', function(req, res) {
     res.writeHead(405, {"Content-Type": "text/html", "Allow": "POST"});
-    res.write(mustache.to_html(templates["announce.html"], {}));
+    res.write(mustache.to_html(templates["announce.html"], {title: req.hostname + " - Server listing"}));
     res.end();
 });
 

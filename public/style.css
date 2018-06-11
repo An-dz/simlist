@@ -118,10 +118,6 @@ border: 0;
     background-color: #B8DEF7;
     color: #000;
 }
-.main_nav a: {
-
-}
-
 
 /* Styles for the server management form */
 table {
@@ -185,7 +181,6 @@ th.pakset_name {
 }
 
 td {
-    background-color: none;
     background-color: transparent;
     padding: 0.2em 0.4em 0.2em 0.4em;
 }
