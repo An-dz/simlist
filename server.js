@@ -24,6 +24,7 @@ var prune_interval    = process.env.PRUNE_INTERVAL || 604800;
 var express    = require('express');
 var fs         = require("fs");
 var mustache   = require('mustache');
+var bodyParser = require('body-parser')
 var listing    = require('./lib/Listing.js');
 var simutil    = require('./lib/SimUtil.js');
 var translator = require('./lib/Translator.js');
@@ -32,7 +33,8 @@ var ListingProvider = require('./lib/MemoryListingProvider.js').ListingProvider;
 
 var app = express();
 
-app.use(express.bodyParser());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 app.set('trust proxy', true);
 
 var translate = (new translator.Translator()).translate;
@@ -68,25 +70,25 @@ app.get('/announce', function(req, res) {
 });
 
 app.post('/announce', function(req, res) {
-    //if (req.ip === '178.77.102.239') { res.send(403, ""); return; }
+    console.log(JSON.stringify(req.body));
+    //if (req.ip === '178.77.102.239') { res.status(403).send(""); return; }
 
     if (!req.body.port) {
-        res.send(400, "Bad Request - port field missing");
+        res.status(400).send("<h1>Bad Request</h1><p>Port field missing</p>");
         return;
     }
     if (!listing.validate_port(listing.parse_port(req.body.port))) {
-        res.send(400, "Bad Request - port field invalid");
+        res.status(400).send("<h1>Bad Request</h1><p>Port field invalid</p>");
         return;
     }
     if (!req.body.dns) {
-        res.send(400, "Bad Request - DNS field missing");
+        res.status(400).send("<h1>Bad Request</h1><p>DNS field missing</p>");
         return;
     }
 
     listing.validate_dns(listing.parse_dns(req.body.dns), req.ip,
         function () {
             var new_listing = new listing.Listing(req.body.dns, req.body.port);
-            console.log(JSON.stringify(req.body));
             if (new_listing.name === "") { new_listing.name = new_listing.id; }
 
             listingProvider.findById(new_listing.id, function (existing_listing) {
@@ -94,10 +96,10 @@ app.post('/announce', function(req, res) {
                 new_listing.update_from_body(req.body);
 
                 listingProvider.save(new_listing, function () {});
-                res.send(201, JSON.stringify(new_listing));
+                res.status(201).send(JSON.stringify(new_listing));
             });
         }, function () {
-            res.send(400, "Bad Request - DNS field invalid");
+            res.status(400).send("Bad Request - DNS field invalid");
         }
     );
 });
@@ -113,7 +115,7 @@ app.get('/list', function(req, res) {
 
         // Write header
         res.write(mustache.to_html(templates["header.html"],
-            {title: req.host + " - Server listing", translate: translate, headerimage: header_image}));
+            {title: req.hostname + " - Server listing", translate: translate, headerimage: header_image}));
 
         urlbase = "./list";
         if (req.query.detail) {
@@ -194,10 +196,10 @@ app.get('/list', function(req, res) {
                     }
                 }
             }
-            res.send(200, response);
+            res.status(200).send(response);
         });
     } else {
-        res.send(501, "501 Not Implemented - The specified output format is not supported, supported formats are: " + available_formats.toString());
+        res.status(501).send("<h1>501 Not Implemented</h1><p>The specified output format is not supported, supported formats are:</p>" + available_formats.toString());
     }
 });
 
